@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"time"
+	"net/http"
 )
 
 type Block struct {
@@ -74,4 +75,11 @@ func main() {
 
 		fmt.Printf("Block hash %x\n", newBlock.hash)
 	}
+
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8080", nil)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Input: %s!", r.URL.Path[1:])
 }
