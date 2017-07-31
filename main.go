@@ -1,18 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"time"
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
+	"time"
 )
 
 type Block struct {
-	index uint64
-	timestamp time.Time
-	data string
+	index        uint64
+	timestamp    time.Time
+	data         string
 	previousHash []byte
-	hash []byte
+	hash         []byte
 }
 
 func NewBlock(
@@ -50,8 +50,28 @@ func NewBlock(
 	return block
 }
 
+// NextBlock returns next block
+func NextBlock(lastBlock *Block) *Block {
+	return NewBlock(
+		lastBlock.index+1,
+		time.Now(),
+		fmt.Sprintf("Block number: %d", lastBlock.index+1),
+		lastBlock.hash)
+}
+
 func main() {
 	genesisBlock := NewBlock(0, time.Now(), "Genesis Block", make([]byte, 0))
 
 	fmt.Printf("%x\n", genesisBlock.hash)
+
+	blockchain := []*Block{genesisBlock}
+	previousBlock := genesisBlock
+
+	for i := 0; i < 20; i++ {
+		newBlock := NextBlock(previousBlock)
+		blockchain = append(blockchain, newBlock)
+		previousBlock = newBlock
+
+		fmt.Printf("Block hash %x\n", newBlock.hash)
+	}
 }
