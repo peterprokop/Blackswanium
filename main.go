@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 	"net/http"
+	"encoding/json"
 )
 
 type Block struct {
@@ -16,6 +17,7 @@ type Block struct {
 	hash         []byte
 }
 
+// NewBlock creates new block
 func NewBlock(
 	index uint64,
 	timestamp time.Time,
@@ -76,10 +78,43 @@ func main() {
 		fmt.Printf("Block hash %x\n", newBlock.hash)
 	}
 
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/transaction", transactionHandler)
+	err := http.ListenAndServe(":8080", nil)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Input: %s!", r.URL.Path[1:])
+func transactionHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		readBuffer := make([]byte, 1024, 1024*128)
+		var f interface{}
+		readerCloser := r.Body
+		count, err := readerCloser.Read(readBuffer)
+
+		fmt.Printf("Body size: %d\n", count)
+		fmt.Printf(string(readBuffer), "\n")
+
+		if err != nil && err.Error() != "EOF" {
+			fmt.Println("Read error: ", err.Error())
+			readerCloser.Close()
+			return
+		}
+
+		err = json.Unmarshal(readBuffer, &f)
+
+		fmt.Println(f)
+
+		if err != nil {
+			fmt.Println("Parse error: ", err.Error())
+			readerCloser.Close()
+			return
+		}
+
+		readerCloser.Close()
+	} else {
+		fmt.Fprint(w, `{"success": false, "error": "Only POST method is supported"}`)
+	}
+
 }
